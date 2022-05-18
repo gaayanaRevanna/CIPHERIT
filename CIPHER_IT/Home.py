@@ -1,5 +1,7 @@
 from tkinter import*
 from PIL import ImageTk, Image
+from tkinter import messagebox
+import os
 from database import databaseClass
 class Home_Page:
     def __init__(self,root):
@@ -32,10 +34,10 @@ class Home_Page:
         self.lbl_change_image.after(2000,self.animate) 
 
 
-    def database(self):
-        self.new_win=Toplevel(self.root)
-        self.new_obj=databaseClass(self.new_win)
-      
+    def database(self): 
+        self.root.destroy()
+        os.system("python database.py")
+        
 root=Tk()
 obj=Home_Page(root)
 root.mainloop()

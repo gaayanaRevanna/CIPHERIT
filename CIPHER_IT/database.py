@@ -2,6 +2,7 @@ from tkinter import*
 from PIL import Image,ImageTk
 from tkinter import ttk,messagebox
 import sqlite3
+import os
 class databaseClass:
     def __init__(self,root):
         self.root=root
@@ -20,21 +21,16 @@ class databaseClass:
         self.var_phno=StringVar()
         self.var_email=StringVar()
         self.var_hpass=StringVar()
-        self.var_fname1=StringVar()
-        self.var_lname1=StringVar()
-        self.var_gender1=StringVar()
-        self.var_dob1=StringVar()
-        self.var_phno1=StringVar()
-        self.var_email1=StringVar()
+        
         #--------------------search frame--------------------------------
         SearchFrame=LabelFrame(self.root,text="Search for data",font=("rockwell",12),bd=2,relief=RIDGE,bg="white")
         SearchFrame.place(x=250,y=20,width=600,height=70)
         #----------------------option---------------
-        cmb_search=ttk.Combobox(SearchFrame,textvariable=self.var_searchby,values=("Select","Email","Name","phone"),state='readonly', justify=CENTER,font=("rockwell",15))
+        cmb_search=ttk.Combobox(SearchFrame,textvariable=self.var_searchby,values=("Select","fname","email","gender","phoneno"),state='readonly', justify=CENTER,font=("rockwell",15))
         cmb_search.place(x=10,y=10,width=180,height=26)
         cmb_search.current(0)
         txt_search=Entry(SearchFrame,textvariable=self.var_searchtxt,font=("rockwell",15),bg="ivory").place(x=200,y=10)
-        btn_search=Button(SearchFrame,text="Search",font=("rockwell",15),bg="rosybrown",fg="mint cream",cursor="hand2").place(x=440,y=10,width=130,height=27)
+        btn_search=Button(SearchFrame,text="Search",command=self.search,font=("rockwell",15),bg="rosybrown",fg="mint cream",cursor="hand2").place(x=440,y=10,width=130,height=27)
         #---------------title----------------
         title=Label(self.root,text="Account Details",font=("rockwell",15),bg="rosybrown",fg="mint cream", justify=CENTER).place(x=0,y=100,width=1200)
         #-----------------contents-------------------------------
@@ -56,11 +52,12 @@ class databaseClass:
         txt_phno=Entry(self.root,textvariable=self.var_phno,font=("rockwell",15),bg="ivory",state='readonly').place(x=850,y=190,width=180)
         #--------------------------row3----------------------------
         lbl_email=Label(self.root,text="email",font=("times new roman",15),bg="#FFF0F5",fg="dim gray").place(x=50,y=230)
-        txt_email=Entry(self.root,textvariable=self.var_email,font=("rockwell",15),bg="ivory",state='readonly').place(x=150,y=230,width=180)
+        txt_email=Entry(self.root,textvariable=self.var_email,font=("rockwell",15),bg="ivory",state='readonly').place(x=150,y=230,width=230)
         lbl_hpass=Label(self.root,text="Hashed password",font=("times new roman",15),bg="#FFF0F5",fg="dim gray").place(x=400,y=230)
-        txt_hpass=Entry(self.root,textvariable=self.var_email,font=("rockwell",15),bg="ivory",state='readonly').place(x=600,y=230,width=300)   
+        txt_hpass=Entry(self.root,textvariable=self.var_hpass,font=("rockwell",15),bg="ivory",state='readonly').place(x=600,y=230,width=350)   
 
-        btn_select=Button(self.root,text="select to crack the password",command=self.select,font=("rockwell",15),bg="rosy brown",fg="mint cream",cursor="hand2").place(x=350,y=270,width=300,height=28)
+        btn_rtable=Button(self.root,text="crack password using rainbow table",command=self.rainbow,font=("rockwell",15),bg="rosy brown",fg="mint cream",cursor="hand2").place(x=50,y=270,width=400,height=28)
+        btn_brut=Button(self.root,text="crack password by bruth force method",font=("rockwell",15),bg="rosy brown",fg="mint cream",cursor="hand2").place(x=500,y=270,width=400,height=28)
         #---------------------account details-------------------------
         de_frame=Frame(self.root,bd=3,relief=RIDGE)
         de_frame.place(x=0,y=320,relwidth=1,height=180)
@@ -99,7 +96,7 @@ class databaseClass:
     def get_data(self,ev): 
         f=self.detailsTable.focus()
         content=(self.detailsTable.item(f))
-        row=content['values']
+        row=content['values']        
         self.var_slno.set(row[0])
         self.var_fname.set(row[1])
         self.var_lname.set(row[2])
@@ -108,6 +105,7 @@ class databaseClass:
         self.var_phno.set(row[5])
         self.var_email.set(row[6])        
         self.var_hpass.set(row[7])
+       
         
 
 
@@ -123,13 +121,39 @@ class databaseClass:
         except Exception as ex:
             messagebox.showerror("Error",f'Error due to: {str(ex)}',parent=self.root)   
 
-    def select(self):
-        self.var_fname1=self.var_fname.get()
-        self.var_lname1=self.var_lname.get()
-        self.var_gender1=self.var_gender.get()
-        self.var_dob1=self.var_dob.get()
-        self.var_phno1=self.var_phno.get()
-        self.var_email1=self.var_email.get()
+
+    def search(self):  
+        con=sqlite3.connect(database=r'hacked.db')
+        cur=con.cursor()
+        try:
+            if self.var_searchby.get()=="Select":
+                messagebox.showerror("Error","Select Search By Option",parent=self.root)
+            elif self.var_searchtxt.get()=="":   
+                messagebox.showerror("Error","Search Input is required",parent=self.root)
+            else:            
+                cur.execute("select * from Hacked_Database where "+self.var_searchby.get()+" LIKE '%"+self.var_searchtxt.get()+"%'")
+                rows=cur.fetchall()
+                if len(rows)!=0:        
+                    self.detailsTable.delete(*self.detailsTable.get_children())
+                    for row in rows:
+                        self.detailsTable.insert('',END,values=row)
+                else:
+                    messagebox.showerror("Error","No record found",parent=self.root)      
+        except Exception as ex:
+            messagebox.showerror("Error",f'Error due to: {str(ex)}',parent=self.root)        
+
+    def rainbow(self): 
+        if self.var_fname.get()=="":
+            messagebox.showerror("Error","No record selected",parent=self.root)
+        else:    
+            fname=self.var_fname.get()
+            lname=self.var_lname.get()
+            gender=self.var_gender.get()
+            dob=self.var_dob.get()
+            phno=self.var_phno.get()
+            email=self.var_email.get()
+            self.root.destroy()
+            os.system("python rainbowTable.py")
         
 
     
